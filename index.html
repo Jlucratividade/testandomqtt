@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket MQTT Client</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+<body>
+    <h1>WebSocket MQTT Client</h1>
+    <div id="log"></div>
+    <button onclick="connect()">Connect</button>
+    <button onclick="publish()">Publish</button>
+
+    <script>
+        var client;
+        var topicoPraReceber = "test/topicoQualQuer";
+        var topicoPraEnviar = "test/topicoQualQuer";
+        var logDiv = document.getElementById('log');
+        var reconnectInterval = 5000; // Intervalo de tentativa de reconexão em milissegundos
+        var reconnectTimeout;
+
+        function log(message) {
+            logDiv.innerHTML += message + '<br>';
+            console.log(message);
+        }
+
+        function connect() {
+            var clientId = 'client_' + Math.random().toString(16).substr(2, 8);
+            // URL do broker HiveMQ usando WebSocket seguro
+            client = mqtt.connect('wss://6f41a46fa92e42e1be59ee1143192517.s1.eu.hivemq.cloud:8884/mqtt', {
+                clientId: clientId,
+                user: 'jlucratividade', // Descomente se necessário
+                password: '010101', // Descomente se necessário
+            });
+            
+            client.on('connect', onConnect);
+            client.on('error', function (error) {
+                log('Connection failed: ' + error);
+                reconnectTimeout = setTimeout(connect, reconnectInterval);
+            });
+            client.on('message', onMessageArrived);
+        }
+
+        function onConnect() {
+            clearTimeout(reconnectTimeout);
+            log('Connected to MQTT broker');
+            // Subscribe to a topic
+            client.subscribe(topicoPraReceber);
+        }
+
+        function onMessageArrived(topic, message) {
+            log('Received message: ' + message.toString());
+        }
+
+        function publish() {
+            if (client.connected) {
+                var message = 'Hello, MQTT!';
+                client.publish(topicoPraEnviar, message);
+            } else {
+                log('Not connected to MQTT broker');
+            }
+        }
+
+        connect();
+    </script>
+</body>
+</html>
